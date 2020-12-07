@@ -1,0 +1,405 @@
+---
+title: ''
+author: "mame diarra toure-nisrine moummou"
+date: "10 mai 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+#Q3
+#implémentation du pricer1 avec la formule démontré a la question 2
+# Nous utilison la fonction choose pour calculer les coefficients binomiaux
+#la fonction prend en argument N, rN , hN , bN , s et la fonction f définit dans l'énoncé et  retourne le prix p(N) obtenu
+price1<-function(N,rN,hN,bN,s,f){
+  a=1/(1+rN)**N
+  somme=0
+  qN<-(rN-bN)/(hN-bN)
+  for (i in 0:N){
+    somme=somme+(choose(N,i)*qN**i*(1-qN)**(N-i)*
+                   f(s*((1+hN)**i*(1+bN)**(N-i))))
+    }
+    return (a*somme)
+}
+```
+#Q4
+```{r}
+#implémentation de la fonction f qui prend en argument un reel x et renvoie le max entre x-90 et 0
+f<-function(x){
+  return (max(x-90,0))
+}
+```
+```{r}
+#test du pricer1 avec les valeurs s = 100, hN = 0.05, bN = −0.05 ,rN = 0.01 ,N = 10 et f=max(x-90,0) .
+teste_pricer1<-price1(30,0.01,0.05,-0.05,100,f)
+teste_pricer1<-price1(30,0.01,0.05,-0.05,100,f)
+print(paste("le prix donner par la fonction price1 est",teste_pricer1))
+```
+#Q5
+```{r}
+#fonction prix_option prend en argument N, rN , hN , bN , s et renvoie la matrice correpsondant au prix pour tous les instants tk  k pris entre 1 et N+1 
+prix_option<-function(N,rN,hN,bN,s,f) {
+qN<-(rN-bN)/(hN-bN)
+  matrice<- matrix(0,nrow=N+1,ncol=N+1)
+    for (i in 0:N) {
+    matrice[i+1,N+1]=f(s*((1+hN)**(N-i))*((1+bN)**(i)))
+    }
+    for (j in N:1){
+      for (i in 1:j){
+        matrice[i,j]=(1/(1+rN))*((matrice[i,j+1])*qN+(matrice[i+1,j+1])*(1-qN))
+      }
+      
+    }
+    return (matrice)
+}
+price2 <- function(N,rN,hN,bN,s,f) {
+  resultat=prix_option(N,rN,hN,bN,s,f)
+  return (resultat[1,1])
+}
+```
+
+
+```{r}
+#Q6 test pricer2 avec les valeurs s = 100, rN = 0.01, hN = 0.05,bN = −0.05, N = 3. 
+
+N=3
+hN=0.05
+bN=-0.05
+rN=0.01
+s=100
+f1<-function(x){
+  return (max(x-90,0))
+}
+teste_pricer2<-price2(N,rN,hN,bN,s,f1)
+print(paste("le prix donner par la fonction price2 est",teste_pricer2))
+```
+
+```{r}
+#Q7 comparaison de spricer avec un N aléatoire entre 5 et 15
+N<-round(runif(1, min=5, max=15))
+N
+p2<-price2(N,0.01,0.05,-0.05,100,f)
+p1<-price1(N,0.01,0.05,-0.05,100,f)
+print(paste("le prix donné par price1 est",p1))
+print(paste("le prix donné par price2 est",p2))
+print(paste("la difference est de",p1-p2))
+```
+```{r}
+#Q10
+#calcule de alpha0 et beta0 (couverture a la date 0) a l'aide de la formule dobtenue a la qestion 9
+f<-function(x){
+  return (max(x-100,0))
+}
+s<- 100
+hN<- 0.05
+bN<- -0.05
+N<- 2
+rN<- 0.03
+qN<- (rN-bN)/(hN-bN)
+x1<- s*(1+hN)**2
+y1<- s*(1+bN)*(1+hN)
+z1<- s*(1+bN)**2
+denom<-(1+rN)*(hN-bN)*s
+numer<- (qN*f(x1)+(1-qN)*f(y1))-(qN*f(y1)-(1-qN)*f(z1))
+alpha0<- numer/denom
+print(paste("Alpha0 vaut:",alpha0))
+a<- s*(1+hN)
+v1<- (qN*f(x1)+(1-qN)*f(y1))/(1+rN)
+den<- (1+rN)
+num<- v1-(alpha0*a)
+beta0<- num/den
+print(paste("Beta0 vaut:",beta0))
+
+```
+ $S_{t{1}}^{(2)}=(1+h_N)*S_{t_0}^{(2)}$
+```{r}
+#calcule de alpha 1 et beta1 (couverture a la date 1) a l'aide de la formule determiner a la question 8
+#cas 1  St1(2)=1+hN*St0(2)
+num1<-f(x1)-f(y1)
+den1<-(hN-bN)*(1+hN)*s
+alpha1<-num1/den1
+print(paste("alpha1 vaut:",alpha1))
+
+numer1<-f(y1)-(alpha1*y1)
+denom1<- (1+rN)**2
+beta1<-numer1/denom1
+print(paste("Beta1 vaut:",beta1))
+```
+```{r}
+#calcule de alpha 1 et beta1 (couverture a la date 1) a l'aide de la formule determiner a la question 8
+#cas 2  St1(2)=1+bN*St0(2)
+num1b<-f(y1)-f(z1)
+den1b<-(hN-bN)*(1+bN)*s
+alpha1b<-num1b/den1b
+print(paste("alpha1 vaut:",alpha1b))
+
+numer1b<-f(z1)-(alpha1b*z1)
+denom1b<- (1+rN)**2
+beta1b<-numer1b/denom1b
+print(paste("Beta1 vaut:",beta1b))
+```
+
+```{r}
+#Q12
+#fonction price3 qui prend en argument  n, s, r, σ, T et et renvoie le prix p(n) a l'aide de la formule donner dans l'énoncé
+# les  ξi ont ete obtenu a l'aide de la fonction rnorm
+price3 <- function (n,s,r,sigma,t,f) {
+  xi<-rnorm(n)
+  somme=0
+  for (i in 1:n){
+    somme=somme+f(s*exp(((r-(sigma**2/2))*t)+(sigma*sqrt(t)*xi[i])))
+  }
+  pn=somme*(exp(-r*t)*(1/n))
+  return (pn)
+}
+```
+```{r}
+#Q13 Tracer du prix p(n) en fonction de n 
+fmax<-function(x){
+  return (max(100-x,0))
+  }
+X=1:10
+Y=c()
+Z=c()
+for (k in X) {
+  Y[k]=price3((10**5)*k,100,0.01,0.1,1,fmax)
+  Z[k]=(10**5)*k
+}
+plot(Z,Y,type="l",col="green",xlab="n",ylab="prix p(n)", main="tracé du prix en fonction de n (cardinal distribution N(0,1))")
+legend("topright",legend=c("prix p(n)"),col=c("green"), lty=1:2, cex=0.8)
+```
+```{r}
+#Q15
+#fonction calcul_d  qui calule le d de la formule de black scholes donné dans l'énoncé
+#Le calcul etant long je le separe en 3
+#et effectue les 3 sous-calculs separement 
+#les stockant dans les variable i, j et m 
+calcul_d<- function(s,r,sig,t,k){
+  i<- 1/(sig*sqrt(t))
+  j<- log(s/k)
+  m<-(r+(sig**2)/2)*t
+  return(i*(j+m))
+}
+#fonction put calcule la valeur du put donné par la formule de Black scholes
+# la fonction prend en argument  s, r, σ, T,  et renvoie le prix de l'option
+put<-function (s,r,sig,t,k){
+  d<- calcul_d(s,r,sig,t,k)
+  w<- (-s)*pnorm(-d, 0, 1)
+  h<-k*exp(-r*t)*pnorm((-d+sig*sqrt(t)),0,1)
+  return(w+h)
+  }
+```
+
+```{r}
+#Q16 test de la fonction put
+s<-100
+r<-0.04
+t<-1
+K<-100
+sig<-0.1
+p<-put(s,r,sig,t,K)
+print(paste("pour s= 100,r=0.01,T=1, K=100 et sigma=0.1  le put vaut:",p))
+```
+
+```{r}
+#Q17 tracé de la fonction donner par price3 et du put pouur les valeurs r=0.01, sigma=0.1, S=100,T=1, N=10**5k, k in [1,10] 
+X<-1:10
+price3v=c() # vecteur du prix donné par price3 en fonction de n
+n<-c()
+for (k in X) {
+  price3v[k]=price3((10**5)*k,100,0.01,0.1,1,fmax)
+  n[k]=(10**5)*k
+}
+s<-100
+r1<-0.01
+t<-1
+K<-100
+sig<-0.1
+p1<-put(s,r1,sig,t,K) #valeur du put p
+
+plot(n,price3v, type= 'l' ,col= "purple", xlim= c(10**5,10**6),xlab="n",ylab="prix",main="tracé du prix donné par price3")
+a=rep(p1,10)
+lines(n,a)
+legend("topright",legend=c("prix p(n)","p"),col=c("purple","black"), lty=1:2, cex=0.8)
+```
+```{r include=F}
+library(plot3D)
+```
+```{r,fig.align='center', fig.width=9}
+#Q18 tracé du put en fonction de S et T (3D)
+put_s_t<-function(s,T){
+  return(put(s,0.01,0.1,T,100))
+}
+s<-seq(20,200,length.out = 6)
+T<-c(1/12,1/6,1/4,1/3,1/2,1)
+prix<-outer(s,T,put_s_t)  
+persp(s,T,prix,theta = 25, phi= 15,col=c("darkblue","cyan",
+"cyan4","cornflowerblue","dodgerblue3"), main="prix de l'option en fonction de S et T")
+```
+
+```{r}
+#Q19 Tracé du prix donné par la fonction price 1 et dede la valeur du put
+x=1:100
+y=c()
+r=0.04
+t=1
+sigma=0.2
+s=100
+for (k in x) {
+  N=10*k
+  y[k]=price2(N,(r*t)/N,(r*t/N)+sigma*sqrt(t)/sqrt(N),(r*t/N)-sigma*sqrt(t)/sqrt(N),s,fmax)
+}
+p=put(s, r, sigma, t, 100)
+cprice2 <- data.frame(X = x, Y = y)
+ 
+cput <- data.frame(X = x, Y = c(p,p))
+
+plot(cprice2$X, cprice2$Y,col = "red", xlab = "N", ylab = "Prix", type='l',main = "tracé de price2 et put")
+lines(cput$X, cput$Y, col = "blue")
+legend("topright",legend=c("prix","put"),col=c("red","blue"), lty=1:2, cex=0.8)
+```
+#Q20
+```{r}
+#Calcule de la matrice A obtenue dans le cadre de la résolution de l'equation differentielle de black_scholes
+matrice_A<- function(theta,M,N,K,r,sig,t,L){
+  A=matrix(0,nrow = M,ncol = M)
+  dt=t/N
+  for (i in 1:M){
+    a=r*theta*i*dt
+    b=(sig**2)*(i**2)*theta*dt
+    c=r*i*(1- theta)*dt
+    d=(sig**2)*(i**2)*(1- theta)*dt
+    A[i,i]=1+b+a
+  }
+  for (i in 2:M){
+     b=(sig**2)*(i**2)*theta*dt
+      A[i,i-1]=-(0.5*b)
+      }
+    for (i in 1:M-1){
+    a=r*theta*i*dt
+    b=(sig**2)*(i**2)*theta*dt
+    A[i,i+1]=-(a+0.5*b)
+    }
+    return (A)
+}
+#Calcule de la matrice B obtenue dans le cadre de la résolution de l'equation differentielle de black_scholes
+matrice_B<- function(theta,M,N,K,r,sig,t,L){
+ B =matrix(0,nrow = M,ncol = M)
+  dt=t/N
+  for (i in 1:M){
+    a=r*theta*i*dt
+    b=(sig**2)*(i**2)*theta*dt
+    c=r*i*(1- theta)*dt
+    d=(sig**2)*(i**2)*(1- theta)*dt
+    B[i,i]=1-c-d-r*dt
+  }
+  for (i in 2:M){
+      d=(sig**2)*(i**2)*(1- theta)*dt
+      B[i,i-1]=0.5*d
+      }
+    for (i in 1:M-1){
+        c=r*i*(1- theta)*dt
+      d=(sig**2)*(i**2)*(1- theta)*dt
+      B[i,i+1]=0.5*d+c
+    }
+    return(B)
+}
+#Calcule du vecteur obtenue dans le cadre de la résolution de l'equation differentielle de black_scholes
+vecteur_c<-function(K,r,n,t,N,M,theta,sig){
+  Cn<- rep(0,M)
+  dt=t/N
+  b1<-(sig**2)*(n**2)*theta*dt
+  d1=(sig**2)*(n**2)*(1-theta)*dt
+  dt=t/N
+  Cn[1]=0.5*K*exp(-r*n*dt)*(b1*exp(-r*dt)+d1)
+  return(Cn)
+}
+ #Fonction resolution_theta: résolution avec un theta-shama de l'équation obtenue dans le cadre de de l'approximation de L'EDP de black-scholes
+# on utlise la fonction solve de R qui permet de résoudre l'equation Ax=b
+resolution_theta<-function(theta,M,N,K,r,sig,t,L){
+  Un_m=matrix(nrow = M, ncol = N+1)
+   ds=L/(M+1)
+  for (i in 1:M){
+    s_i=i*ds
+    Un_m[i,1]=max(K-s_i,0)
+  }
+  Un_m
+  A=matrice_A(theta,M,N,K,r,sig,t,L)
+  B=matrice_B(theta,M,N,K,r,sig,t,L)
+  for(n in 1:N){
+    Cn<-vecteur_c(K,r,n,t,N,M,theta,sig)
+    b=B%*%(Un_m[,n])+(Cn)
+    Un_m[,n+1]=solve(A,b)
+  }
+  return(Un_m[,N+1])
+}
+```
+
+```{r}
+#la méthode crank_nicholson correspond à la résolution du theta-schema pour theta=0.5 
+crank_nicholson<- function(M,N,K,r,sig,t,L){
+  return(resolution_theta(0.5,M,N,K,r,sig,t,L)) # crank_nicholson
+}
+#la méthode differences finies explicites correspond à la résolution du theta-schema pour theta=1 
+explicit<- function(M,N,K,r,sig,t,L){
+  return(resolution_theta(0,M,N,K,r,sig,t,L))
+}
+#la méthode des differences finies implicites correspond à la résolution du theta-schema pour theta=0
+implicit<- function(M,N,K,r,sig,t,L){
+  return(resolution_theta(1,M,N,K,r,sig,t,L))
+}
+```
+
+```{r}
+#tracé de la résoltution de l'equation par les 3 méthodes pour S allant de 0  à 300 et pour M=N = Length(S)
+S=seq(0,300,1)
+a=length(S)
+a
+plot(S,crank_nicholson(a,a,100,0.04,0.1,1,400),type="l",col="green",ylim=c(-40,90),ylab="Prix(P0)" , main="Tracé du P0 obtenu en fonction de S par les différentes méthodes")
+lines(S,implicit(a,a,100,0.04,0.1,1,400),type="l",col="yellow",ylim=c(-40,90))
+lines(S,explicit(a,a,100,0.04,0.1,1,400),type="l",col="red",ylim=c(-40,090))
+
+legend("topright",legend=c("crank-nicholson","explicit","implicit",print(paste("pour M=N=",a))),col=c("green","red","yellow","white"), lty=1:2, cex=0.8)
+
+```
+
+```{r}
+#fonction erreur_relative: calcule l'erreur reltive entre les 3 méthodes
+erreur_relative<- function(a,b){
+  return(2*(abs(a-b))/norm(a+b,type="2"))
+}
+S=seq(0,300,1)
+a=length(S)
+a
+
+#travé de l'erreur relative entre les 3 methodes et put
+plot(S,erreur_relative(crank_nicholson(a,a,100,0.04,0.1,1,400),put(S,0.04,0.1,1,100)),type="l",col="green",ylab="erreur_relative",main="erreur relative entre les différentes méthodes",ylim=c(0,0.007))
+lines(S,erreur_relative(implicit(a,a,100,0.04,0.1,1,400),put(S,0.04,0.1,1,100)),type="l",col="red",ylim=c(0,0.007))
+lines(S,erreur_relative(explicit(a,a,100,0.04,0.1,1,400),put(S,0.04,0.1,1,100)),type="l",col="blue",ylim=c(0,0.007))
+legend("topright",legend=c("crank-nicholson ","explicit","implicit"),col=c("green","blue","red"), lty=1:2, cex=0.8)
+```
+```{r}
+#Utilisation de la CFL  pour stabiliser le schema explicite avec M**2=N
+S=seq(0,300,2)
+a=length(S)
+a
+plot(S,crank_nicholson(a,a**2,100,0.04,0.1,1,400),type="l",col="green",ylim=c(0,90),ylab="Prix(P0)" , main="Tracé du P0 obtenu en fonction de S par les différentes méthodes")
+lines(S,implicit(a,a**2,100,0.04,0.1,1,400),type="l",col="yellow",ylim=c(0,90))
+lines(S,explicit(a,a**2,100,0.04,0.1,1,400),type="l",col="red",ylim=c(0,090))
+
+legend("topright",legend=c("crank-nicholson","explicit","implicit",print(paste("pour M**2=N=",a**2))),col=c("green","red","yellow","white"), lty=1:2, cex=0.8)
+```
+```{r}
+#Utilisation de la CFL  pour stabiliser le schema explicite avec M**2=N
+#tracé de l'erreur
+S=seq(0,300,2)
+a=length(S)
+a
+plot(S,erreur_relative(crank_nicholson(a,a**2,100,0.04,0.1,1,400),put(S,0.04,0.1,1,100)),type="l",col="green",ylab="erreur_relative",main="erreur relative entre les différentes méthodes",ylim=c(0,0.007))
+lines(S,erreur_relative(implicit(a,a**2,100,0.04,0.1,1,400),put(S,0.04,0.1,1,100)),type="l",col="red",ylim=c(0,0.007))
+lines(S,erreur_relative(explicit(a,a**2,100,0.04,0.1,1,400),put(S,0.04,0.1,1,100)),type="l",col="blue",ylim=c(0,0.007))
+legend("topright",legend=c("crank-nicholson ","explicit","implicit"),col=c("green","blue","red"), lty=1:2, cex=0.8)
+```
+
